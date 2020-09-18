@@ -1,0 +1,100 @@
+#include <Wire.h>
+#define addr 0x0D //I2C Address for The HMC5883
+
+#define lmodir 4
+#define lmospeed 5
+#define rmodir 2
+#define rmospeed 3
+
+#define buzz 13
+
+#define btTX 0
+#define btRX 1
+
+#define ultraTrig 9
+#define ultraEcho 10
+
+#define gpsTX 12
+#define gpsRX 11
+
+#define comSCL A5
+#define comSDA A4
+
+int comX, comY, comZ;
+
+void setup() {
+  // put your setup code here, to run once:
+
+  Serial.begin(9600);
+
+  Wire.begin(); // Start the I2C interface.
+  Wire.beginTransmission(addr); //start talking
+  Wire.write(0x0B); // Tell the HMC5883 to Continuously Measure
+  Wire.write(0x01); // Set the Register
+  Wire.endTransmission();
+  Wire.beginTransmission(addr); //start talking
+  Wire.write(0x09); // Tell the HMC5883 to Continuously Measure
+  Wire.write(0x1D); // Set the Register
+  Wire.endTransmission();
+
+  pinMode(lmodir, OUTPUT);
+  pinMode(lmospeed, OUTPUT);
+  pinMode(rmodir, OUTPUT);
+  pinMode(rmospeed, OUTPUT);
+
+}
+
+void loop() {
+
+  Wire.beginTransmission(addr);
+  Wire.write(0x00); //start with register 3.
+  Wire.endTransmission();
+
+  //Read the data.. 2 bytes for each axis.. 6 total bytes
+  Wire.requestFrom(addr, 6);
+  if (6 <= Wire.available()) {
+    comX = Wire.read(); //MSB  x
+    comX |= Wire.read() << 8; //LSB  x
+    comZ = Wire.read(); //MSB  z
+    comZ |= Wire.read() << 8; //LSB z
+    comY = Wire.read(); //MSB y
+    comY |= Wire.read() << 8; //LSB y
+  }
+
+  Serial.print("comX : ");
+  Serial.print(comX);
+  Serial.print(" \t comY : ");
+  Serial.print(comY);
+  Serial.print(" \t comZ : ");
+  Serial.print(comZ);
+  Serial.println();
+
+}
+
+void moveForward() {
+  digitalWrite(lmodir, LOW);
+  analogWrite(lmospeed, 255);
+  digitalWrite(rmodir, LOW);
+  analogWrite(rmospeed, 255);
+}
+
+void moveBack() {
+  digitalWrite(lmodir, HIGH);
+  analogWrite(lmospeed, 0);
+  digitalWrite(rmodir, HIGH);
+  analogWrite(rmospeed, 0);
+}
+
+void turnLeft() {
+  digitalWrite(lmodir, HIGH);
+  analogWrite(lmospeed, 0);
+  digitalWrite(rmodir, LOW);
+  analogWrite(rmospeed, 255);
+}
+
+void turnRight() {
+  digitalWrite(lmodir, LOW);
+  analogWrite(lmospeed, 255);
+  digitalWrite(rmodir, HIGH);
+  analogWrite(rmospeed, 0);
+}
